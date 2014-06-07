@@ -1,3 +1,26 @@
+/*
+ Copyright (c) 2014 K. M. Lau
+ Licensed under the MIT license. You may not use this file unless in compliance with this license.
+ 
+ Permission is hereby granted, free of charge, to any person obtaining a copy
+ of this software and associated documentation files (the "Software"), to deal
+ in the Software without restriction, including without limitation the rights
+ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ copies of the Software, and to permit persons to whom the Software is
+ furnished to do so, subject to the following conditions:
+
+ The above copyright notice and this permission notice shall be included in
+ all copies or substantial portions of the Software.
+
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ THE SOFTWARE.
+*/
+
 package com.kmlau.g2048;
 
 import java.util.ArrayList;
@@ -60,6 +83,7 @@ public class G2048State implements GameState<G2048State.Move, G2048State> {
 
 	private byte board[][];
 	private int currentPlayer = 1;
+	private int pastMoveCount = 0;
 	private EnumMap<Move, byte[][]> nextBoardCache;
 
 	private G2048State(byte board[][]) {
@@ -83,7 +107,7 @@ public class G2048State implements GameState<G2048State.Move, G2048State> {
 			int newcol = 0;
 			boolean canCombine = true;
 			for (int col = 0; col < 4; ++col) {
-				byte val = m.get(row, col, board);
+				final byte val = m.get(row, col, board);
 				if (val > 0) {
 					if (newcol > 0 && m.get(row, newcol - 1, newBoard) == val) {
 						if (canCombine) {
@@ -207,14 +231,7 @@ public class G2048State implements GameState<G2048State.Move, G2048State> {
 
 	@Override
 	public double utility(int player) {
-		if (player == 1) {
-			int u = 0;
-			for (byte[] row : board) for (byte v : row) {
-				u += v > 0 ? (1 << v) : 100;  // the added 100 for an empty cell is arbitrary.
-			}
-			return u / 2048.0;
-		}
-		return 0;
+		return player == 1 ? pastMoveCount / 2048.0 : 0;
 	}
 
 	public double[] utilities() {
@@ -233,6 +250,7 @@ public class G2048State implements GameState<G2048State.Move, G2048State> {
 		nextBoardCache = null;
 		board = newBoard;
 		currentPlayer = PLAYER_CHANCE_NODE;
+		++pastMoveCount;
 	}
 
 	@Override
@@ -249,6 +267,7 @@ public class G2048State implements GameState<G2048State.Move, G2048State> {
 		Pos p = emptyPos.get(r.nextInt(emptyPos.size()));
 		board[p.row][p.col] = r.nextDouble() < 0.9 ? (byte)1 : 2;
 		currentPlayer = 1;
+		++pastMoveCount;
 	}
 
 	private static int countEmpty(byte[][] board) {
@@ -267,9 +286,10 @@ public class G2048State implements GameState<G2048State.Move, G2048State> {
 
 	public G2048State clone() {
 		G2048State c = new G2048State(clone(board));
-		c.currentPlayer = currentPlayer();
-		if (nextBoardCache != null) {
-			c.nextBoardCache = nextBoardCache.clone();
+		c.currentPlayer = currentPlayer;
+		c.pastMoveCount = pastMoveCount;
+		if (c.nextBoardCache != null) {
+			c.nextBoardCache = c.nextBoardCache.clone();
 			for (Map.Entry<Move, byte[][]> e : c.nextBoardCache.entrySet()) {
 				e.setValue(clone(e.getValue()));
 			}

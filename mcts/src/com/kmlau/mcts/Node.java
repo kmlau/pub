@@ -1,3 +1,26 @@
+/*
+ Copyright (c) 2014 K. M. Lau
+ Licensed under the MIT license. You may not use this file unless in compliance with this license.
+ 
+ Permission is hereby granted, free of charge, to any person obtaining a copy
+ of this software and associated documentation files (the "Software"), to deal
+ in the Software without restriction, including without limitation the rights
+ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ copies of the Software, and to permit persons to whom the Software is
+ furnished to do so, subject to the following conditions:
+
+ The above copyright notice and this permission notice shall be included in
+ all copies or substantial portions of the Software.
+
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ THE SOFTWARE.
+*/
+
 package com.kmlau.mcts;
 
 import java.util.ArrayList;
@@ -92,8 +115,8 @@ class Node<Move, GS extends GameState<Move, GS>> {
 		return chanceChild != null ? chanceChild.getValue() : chanceNodeChildrenByCumulativeProb.lastEntry().getValue();
 
 		// GWT compatible code:
-		// SortedMap<Double, Node<Move, GS>> x = chanceNodeChildrenByCumulativeProb.tailMap(random.nextDouble() - 1e-7);
-		// return x.get(x.firstKey());
+		//SortedMap<Double, Node<Move, GS>> x = chanceNodeChildrenByCumulativeProb.tailMap(random.nextDouble() - 1e-7);
+		//return x.get(x.firstKey());
 	}
 
 	private static <T> T randomElement(List<T> list) {
