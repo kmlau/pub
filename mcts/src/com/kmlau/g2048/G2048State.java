@@ -85,6 +85,7 @@ public class G2048State implements GameState<G2048State.Move, G2048State> {
 	private int currentPlayer = 1;
 	private int pastMoveCount = 0;
 	private EnumMap<Move, byte[][]> nextBoardCache;
+	private Boolean terminated = null;
 
 	private G2048State(byte board[][]) {
 		this.board = board;
@@ -202,6 +203,13 @@ public class G2048State implements GameState<G2048State.Move, G2048State> {
 
 	@Override
 	public boolean terminated() {
+		if (terminated == null) {
+			terminated = computeTerminatedness();
+		}
+		return terminated;
+	}
+
+	private boolean computeTerminatedness() {
 		boolean noEmptyCell = true;
 		for (int i = 0; i < 4 && noEmptyCell; ++i) for (int j = 0; j < 4; ++j) {
 			if (board[i][j] == 0) {
@@ -251,6 +259,7 @@ public class G2048State implements GameState<G2048State.Move, G2048State> {
 		board = newBoard;
 		currentPlayer = PLAYER_CHANCE_NODE;
 		++pastMoveCount;
+		terminated = null;
 	}
 
 	@Override
@@ -268,6 +277,7 @@ public class G2048State implements GameState<G2048State.Move, G2048State> {
 		board[p.row][p.col] = r.nextDouble() < 0.9 ? (byte)1 : 2;
 		currentPlayer = 1;
 		++pastMoveCount;
+		terminated = null;
 	}
 
 	private static int countEmpty(byte[][] board) {
@@ -288,6 +298,7 @@ public class G2048State implements GameState<G2048State.Move, G2048State> {
 		G2048State c = new G2048State(clone(board));
 		c.currentPlayer = currentPlayer;
 		c.pastMoveCount = pastMoveCount;
+		c.terminated = terminated;
 		if (c.nextBoardCache != null) {
 			c.nextBoardCache = c.nextBoardCache.clone();
 			for (Map.Entry<Move, byte[][]> e : c.nextBoardCache.entrySet()) {
