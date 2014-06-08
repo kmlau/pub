@@ -55,7 +55,7 @@ public class MonteCarloTreeSearch<Move, GS extends GameState<Move, GS>> {
 			for (int attempt = 0; node == null && attempt < 4; ++attempt) {
 				node = selectAndExpand(root);
 			}
-			if (node == null) break;
+			if (node == null) continue;
 
 			// Play it out.
 			double[] utilities = node.simulate(gameState.currentPlayer(), utilityGoal);
