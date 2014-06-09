@@ -52,10 +52,10 @@ public class MonteCarloTreeSearch<Move, GS extends GameState<Move, GS>> {
 		while (System.currentTimeMillis() < deadline) {
 			// Select the best unexpanded node and expand it.
 			Node<Move, GS> node = null;
-			for (int attempt = 0; node == null && attempt < 4; ++attempt) {
+			for (int attempt = 0; node == null && attempt < 8; ++attempt) {
 				node = selectAndExpand(root);
 			}
-			if (node == null) continue;
+			if (node == null) break;
 
 			// Play it out.
 			double[] utilities = node.simulate(gameState.currentPlayer(), utilityGoal);

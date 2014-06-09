@@ -26,10 +26,10 @@ package com.kmlau.g2048;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.TreeMap;
 
 import com.kmlau.mcts.GameState;
 import com.kmlau.mcts.MonteCarloTreeSearch;
@@ -180,23 +180,21 @@ public class G2048State implements GameState<G2048State.Move, G2048State> {
 	}
 
 	@Override
-	public TreeMap<Double, G2048State> nextChanceStatesByCumulativeProb() {
+	public Map<G2048State, Double> nextChanceStatesWithProbs() {
 		if (currentPlayer() != PLAYER_CHANCE_NODE) {
 			throw new IllegalStateException("Current state is not a chance node.");
 		}
 		List<Pos> emptyPos = getEmptyPos();
-		TreeMap<Double, G2048State> m = new TreeMap<>();
+		Map<G2048State, Double> m = new HashMap<>();
 		if (emptyPos.isEmpty()) return m;
 
-		double cumulativeProb = 0;
 		final byte[] newVals = {1, 2};
 		final double[] probs = {0.9, 0.1};
 		for (Pos p : emptyPos) for (int i = 0; i < newVals.length; ++i) {
 			G2048State s = clone();
 			s.board[p.row][p.col] = newVals[i];
 			s.currentPlayer = 1;
-			cumulativeProb += probs[i] / emptyPos.size();
-			m.put(cumulativeProb, s);
+			m.put(s, probs[i] / emptyPos.size());
 		}
 		return m;
 	}
@@ -364,7 +362,7 @@ public class G2048State implements GameState<G2048State.Move, G2048State> {
 		System.out.println(state);
 		MonteCarloTreeSearch<G2048State.Move, G2048State> mcts = new MonteCarloTreeSearch<G2048State.Move, G2048State>();
 		while (true) {
-			G2048State.Move m = mcts.searchGoodMove(state, 800, 2.5);
+			G2048State.Move m = mcts.searchGoodMove(state, 700, 2.5);
 			state.makeMove(m);
 			state.makeChanceMove();
 			System.out.println(m);

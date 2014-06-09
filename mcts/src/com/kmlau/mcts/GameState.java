@@ -24,7 +24,7 @@
 package com.kmlau.mcts;
 
 import java.util.List;
-import java.util.TreeMap;
+import java.util.Map;
 
 /**
  * Interface describing the common attributes of the state of a turn based multi-player game, possibly
@@ -56,13 +56,14 @@ public interface GameState<Move, GS extends GameState<Move, GS>> {
 	List<Move> possibleMoves() throws IllegalStateException;
 
 	/**
-	 * @return map from cumulative probability to new game state after a random move.
+	 * @return map from new game state after a random move to probability. The probabilities
+	 *   should sum to one.
 	 *   For instance if there are 3 possible random moves, leading to states s1, s2, and s3,
 	 *   with probability 0.3, 0.4 and 0.3 respectively. the returned TreeMap would be
-	 *   { 0.3 : s1 , 0.7 : s2 , 1.0 : s3 }
+	 *   { s1 : 0.3 , s2 : 0.4, s3 : 0.3 }
 	 * @throws IllegalStateException if current player is not 0
 	 */
-	TreeMap<Double, GS> nextChanceStatesByCumulativeProb() throws IllegalStateException;
+	Map<GS, Double> nextChanceStatesWithProbs() throws IllegalStateException;
 
 	/**
 	 * @return whether the game has terminated.

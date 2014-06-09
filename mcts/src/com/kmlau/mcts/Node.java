@@ -24,11 +24,10 @@
 package com.kmlau.mcts;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.SortedMap;
-import java.util.TreeMap;
 
 /**
  * A monte carlo tree node, with methods facilitating monte carlo tree search.
@@ -44,12 +43,12 @@ class Node<Move, GS extends GameState<Move, GS>> {
 	final GS gameState;
 	final Move causationMove;
 	private List<Node<Move, GS>> children;
-	private TreeMap<Double, Node<Move, GS>> chanceNodeChildrenByCumulativeProb;
+	private WeightedRandom<Node<Move, GS>> chanceNodeChildren;
 
 	private int visitCount = 0;
 	private double sumScores = 0;
 
-	private final static Random random = new Random();
+	private final Random random = new Random();
 
 	Node(Node<Move, GS> parent, GS gameState, Move move) {
 		this.parent = parent;
@@ -90,36 +89,23 @@ class Node<Move, GS extends GameState<Move, GS>> {
 				children.add(new Node<>(this, nextState, m));
 			}
 		} else {
-			assert chanceNodeChildrenByCumulativeProb == null;
-			chanceNodeChildrenByCumulativeProb = new TreeMap<>();
-			TreeMap<Double, GS> nextChanceStates = gameState.nextChanceStatesByCumulativeProb();
-			for (Map.Entry<Double, GS> entry : nextChanceStates.entrySet()) {
-				Node<Move, GS> child = new Node<>(this, entry.getValue(), null);
+			assert chanceNodeChildren == null;
+			Map<Node<Move, GS>, Double> chanceNodeChildrenWithProb = new HashMap<>();
+			for (Map.Entry<GS, Double> entry : gameState.nextChanceStatesWithProbs().entrySet()) {
+				Node<Move, GS> child = new Node<>(this, entry.getKey(), null);
 				children.add(child);
-				chanceNodeChildrenByCumulativeProb.put(entry.getKey(), child);
+				chanceNodeChildrenWithProb.put(child, entry.getValue());
 			}
+			chanceNodeChildren = new WeightedRandom<>(chanceNodeChildrenWithProb, random);
 		}
-		if (chanceNodeChildrenByCumulativeProb != null) {
-			return pickChanceNodeChild(chanceNodeChildrenByCumulativeProb);
+		if (chanceNodeChildren != null) {
+			return chanceNodeChildren.get();
 		} else {
 			return children.isEmpty() ? null : randomElement(children);
 		}
 	}
 
-	private static <Move, GS extends GameState<Move, GS>> Node<Move, GS> pickChanceNodeChild(
-			TreeMap<Double, Node<Move, GS>> chanceNodeChildrenByCumulativeProb) {
-		if (chanceNodeChildrenByCumulativeProb.isEmpty()) return null;
-
-		Map.Entry<Double, Node<Move, GS>> chanceChild =
-				chanceNodeChildrenByCumulativeProb.higherEntry(random.nextDouble());
-		return chanceChild != null ? chanceChild.getValue() : chanceNodeChildrenByCumulativeProb.lastEntry().getValue();
-
-		// GWT compatible code:
-		//SortedMap<Double, Node<Move, GS>> x = chanceNodeChildrenByCumulativeProb.tailMap(random.nextDouble() - 1e-7);
-		//return x.get(x.firstKey());
-	}
-
-	private static <T> T randomElement(List<T> list) {
+	private <T> T randomElement(List<T> list) {
 		final int s = list.size();
 		switch (s) {
 		case 0:
@@ -137,8 +123,8 @@ class Node<Move, GS extends GameState<Move, GS>> {
 			return null;
 		}
 		if (gameState.currentPlayer() == GameState.PLAYER_CHANCE_NODE) {
-			assert chanceNodeChildrenByCumulativeProb != null;
-			return pickChanceNodeChild(chanceNodeChildrenByCumulativeProb);
+			assert chanceNodeChildren != null;
+			return chanceNodeChildren.get();
 		} else {
 			if (visitCount == 0) {
 				return randomElement(children);
@@ -187,15 +173,5 @@ class Node<Move, GS extends GameState<Move, GS>> {
 			node.sumScores += utilities[node.parent.gameState.currentPlayer()];
 			node = node.parent;
 		}
-	}
-
-	private Node<Move, GS> findDescendantOfState(GS state, int maxGeneration) {
-		if (gameState.equals(state)) return this;
-		if ((--maxGeneration) < 0) return null;
-		for (Node<Move, GS> child : children) {
-			Node<Move, GS> result = child.findDescendantOfState(state, maxGeneration);
-			if (result != null) return result;
-		}
-		return null;
 	}
 }
