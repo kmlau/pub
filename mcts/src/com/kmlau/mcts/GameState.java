@@ -59,7 +59,7 @@ public interface GameState<Move, GS extends GameState<Move, GS>> {
 	 * @return map from new game state after a random move to probability. The probabilities
 	 *   should sum to one.
 	 *   For instance if there are 3 possible random moves, leading to states s1, s2, and s3,
-	 *   with probability 0.3, 0.4 and 0.3 respectively. the returned TreeMap would be
+	 *   with probability 0.3, 0.4 and 0.3 respectively. the returned Map would be
 	 *   { s1 : 0.3 , s2 : 0.4, s3 : 0.3 }
 	 * @throws IllegalStateException if current player is not 0
 	 */
