@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-import com.kmlau.mcts.GameState;
+import com.kmlau.mcts.GameStateBase;
 import com.kmlau.mcts.MonteCarloTreeSearch;
 
 /**
@@ -39,7 +39,7 @@ import com.kmlau.mcts.MonteCarloTreeSearch;
  * @author K M Lau
  *
  */
-public class G2048State implements GameState<G2048State.Move, G2048State> {
+public class G2048State extends GameStateBase<G2048State.Move, G2048State> {
 
 	private interface BoardAccesser {
 		byte get(int row, int col, byte board[][]);
@@ -84,8 +84,35 @@ public class G2048State implements GameState<G2048State.Move, G2048State> {
 	private byte board[][];
 	private int currentPlayer = 1;
 	private int pastMoveCount = 0;
-	private EnumMap<Move, byte[][]> nextBoardCache;
-	private Boolean terminated = null;
+
+	private final CachedValue<EnumMap<Move, byte[][]>> nextBoards = new CachedValue<EnumMap<Move, byte[][]>>() {
+		@Override
+		protected EnumMap<Move, byte[][]> compute() {
+			EnumMap<Move, byte[][]> nextBoards = new EnumMap<>(Move.class);
+			for (Move m : Move.values()) {
+				byte[][] b = attemptMove(m);
+				if (b != null) nextBoards.put(m, b);
+			}
+			return nextBoards;
+		}
+
+		protected void copy(Object src) {
+			// Deep copy of next-board map.
+			@SuppressWarnings("unchecked")
+			EnumMap<Move, byte[][]> m = ((EnumMap<Move, byte[][]>) src).clone();
+			for (Map.Entry<Move, byte[][]> e : m.entrySet()) {
+				e.setValue(G2048State.clone(e.getValue()));
+			}
+			super.copy(m);
+		}
+	};
+
+	private final CachedValue<Boolean> gameTerminated = new CachedValue<Boolean>() {
+		@Override
+		protected Boolean compute() {
+			return computeTerminatedness();
+		}
+	};
 
 	private G2048State(byte board[][]) {
 		this.board = board;
@@ -128,23 +155,13 @@ public class G2048State implements GameState<G2048State.Move, G2048State> {
 		}
 		return changed ? newBoard : null;
 	}
-
-	private void populateNextBoardCache() {
-		if (nextBoardCache == null) {
-			nextBoardCache = new EnumMap<>(Move.class);
-			for (Move m : Move.values()) {
-				byte[][] b = attemptMove(m);
-				if (b != null) nextBoardCache.put(m, b);
-			}
-		}
-	}
+	
 
 	@Override
 	public Move suggestedMove() {
-		populateNextBoardCache();
 		int maxEmpty = -1;
 		Move move = null;
-		for (Map.Entry<Move, byte[][]> e : nextBoardCache.entrySet()) {
+		for (Map.Entry<Move, byte[][]> e : nextBoards.get().entrySet()) {
 			int count = countEmpty(e.getValue());
 			if (count > maxEmpty) {
 				maxEmpty = count;
@@ -159,8 +176,7 @@ public class G2048State implements GameState<G2048State.Move, G2048State> {
 		if (currentPlayer() == PLAYER_CHANCE_NODE) {
 			throw new IllegalStateException("Current state is a chance node.");
 		}
-		populateNextBoardCache();
-		return new ArrayList<>(nextBoardCache.keySet());
+		return new ArrayList<>(nextBoards.get().keySet());
 	}
 
 	private static class Pos {
@@ -201,10 +217,7 @@ public class G2048State implements GameState<G2048State.Move, G2048State> {
 
 	@Override
 	public boolean terminated() {
-		if (terminated == null) {
-			terminated = computeTerminatedness();
-		}
-		return terminated;
+		return gameTerminated.get();
 	}
 
 	private boolean computeTerminatedness() {
@@ -245,23 +258,21 @@ public class G2048State implements GameState<G2048State.Move, G2048State> {
 	}
 
 	@Override
-	public void makeMove(Move m) throws IllegalStateException, IllegalArgumentException {
+	protected void makeMoveInternal(Move m) throws IllegalStateException, IllegalArgumentException {
 		if (currentPlayer() == PLAYER_CHANCE_NODE) {
 			throw new IllegalStateException("Cannot make a player move for chance node state.");
 		}
-		byte[][] newBoard = nextBoardCache != null ? nextBoardCache.get(m) : attemptMove(m);
+		byte[][] newBoard = nextBoards.populated() ? nextBoards.get().get(m) : attemptMove(m);
 		if (newBoard == null) {
 			throw new IllegalArgumentException("Cannot make move: " + m);
 		}
-		nextBoardCache = null;
 		board = newBoard;
 		currentPlayer = PLAYER_CHANCE_NODE;
 		++pastMoveCount;
-		terminated = null;
 	}
 
 	@Override
-	public void makeChanceMove() throws IllegalStateException {
+	protected void makeChanceMoveInternal() throws IllegalStateException {
 		if (currentPlayer() != PLAYER_CHANCE_NODE) {
 			throw new IllegalStateException("Not a chance node state.");
 		}
@@ -275,7 +286,6 @@ public class G2048State implements GameState<G2048State.Move, G2048State> {
 		board[p.row][p.col] = r.nextDouble() < 0.9 ? (byte)1 : 2;
 		currentPlayer = 1;
 		++pastMoveCount;
-		terminated = null;
 	}
 
 	private static int countEmpty(byte[][] board) {
@@ -292,17 +302,10 @@ public class G2048State implements GameState<G2048State.Move, G2048State> {
 		return newBoard;
 	}
 
-	public G2048State clone() {
+	protected G2048State cloneInternal() {
 		G2048State c = new G2048State(clone(board));
 		c.currentPlayer = currentPlayer;
 		c.pastMoveCount = pastMoveCount;
-		c.terminated = terminated;
-		if (c.nextBoardCache != null) {
-			c.nextBoardCache = c.nextBoardCache.clone();
-			for (Map.Entry<Move, byte[][]> e : c.nextBoardCache.entrySet()) {
-				e.setValue(clone(e.getValue()));
-			}
-		}
 		return c;
 	}
 
@@ -362,7 +365,7 @@ public class G2048State implements GameState<G2048State.Move, G2048State> {
 		System.out.println(state);
 		MonteCarloTreeSearch<G2048State.Move, G2048State> mcts = new MonteCarloTreeSearch<G2048State.Move, G2048State>();
 		while (true) {
-			G2048State.Move m = mcts.searchGoodMove(state, 700, 2.5);
+			G2048State.Move m = mcts.searchGoodMove(state, 800, 2.5);
 			state.makeMove(m);
 			state.makeChanceMove();
 			System.out.println(m);

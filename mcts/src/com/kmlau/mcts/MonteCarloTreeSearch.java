@@ -62,7 +62,7 @@ public class MonteCarloTreeSearch<Move, GS extends GameState<Move, GS>> {
 			node.backPropagate(utilities);
 		}
 		Node<Move, GS> best = null;
-		double maxScore = 0;
+		double maxScore = -Double.MAX_VALUE;
 		for (Node<Move, GS> child : root.getChildren()) {
 			if (child.visitCount() > 0) {
 				double score = child.sumScores() / child.visitCount();
