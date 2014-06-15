@@ -2,8 +2,9 @@
 <!DOCTYPE module PUBLIC "-//Google Inc.//DTD Google Web Toolkit 2.6.0//EN"
   "http://google-web-toolkit.googlecode.com/svn/tags/2.6.0/distro-source/core/src/gwt-module.dtd">
 
-<module rename-to='g2048'>
+<module rename-to='mcts'>
 	<inherits name='com.google.gwt.user.User'/>
+	<source path="connect4" />
     <source path="g2048" />
     <source path="mcts" />
 </module>
