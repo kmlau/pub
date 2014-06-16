@@ -148,7 +148,7 @@ class Node<Move, GS extends GameState<Move, GS>> {
 		}
 	}
 
-	double[] simulate(int targetPlayer, double utilityGoal) {
+	double[] simulate(double utilityGoal) {
 		if (children != null) {
 			throw new IllegalStateException("Not a leaf node.");
 		}
@@ -161,7 +161,9 @@ class Node<Move, GS extends GameState<Move, GS>> {
 				assert m != null;
 				state.makeMove(m);
 			}
-			if (state.utility(targetPlayer) > utilityGoal) break;
+			for (int p = 1; p <= state.playerCount(); ++p) {
+				if (state.utility(p) >= utilityGoal) break;
+			}
 		}
 		return state.utilities();
 	}

@@ -58,7 +58,7 @@ public class MonteCarloTreeSearch<Move, GS extends GameState<Move, GS>> {
 			if (node == null) break;
 
 			// Play it out.
-			double[] utilities = node.simulate(gameState.currentPlayer(), utilityGoal);
+			double[] utilities = node.simulate(utilityGoal);
 			node.backPropagate(utilities);
 		}
 		Node<Move, GS> best = null;
