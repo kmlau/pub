@@ -141,7 +141,10 @@ public class Node<Move, GS extends GameState<Move, GS>> {
 			Node<Move, GS> selected = null;
 			ArrayList<Node<Move, GS>> unvisitedChildren = new ArrayList<>();
 			for (Node<Move, GS> child : children) {
-				if (child.visitCount() == 0) unvisitedChildren.add(child);
+				if (child.visitCount() == 0) {
+					unvisitedChildren.add(child);
+					continue;
+				}
 				if (unvisitedChildren.isEmpty()) {
 					double uctScore = child.sumScores() / child.visitCount() +
 						UCT_Coef * Math.sqrt(Math.log(visitCount) / child.visitCount());
