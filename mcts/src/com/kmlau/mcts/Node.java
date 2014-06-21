@@ -36,19 +36,19 @@ import java.util.Random;
  * @param <Move> The class representing allowed moves by a real non-chance-node player.
  * @param <GS> The game state class
  */
-class Node<Move, GS extends GameState<Move, GS>> {
+public class Node<Move, GS extends GameState<Move, GS>> {
 	private static final double UCT_Coef = Math.sqrt(2);
 
 	private final Node<Move, GS> parent;
-	final GS gameState;
-	final Move causationMove;
+	private final GS gameState;
+	private final Move causationMove;
 	private List<Node<Move, GS>> children;
 	private WeightedRandom<Node<Move, GS>> chanceNodeChildren;
 
 	private int visitCount = 0;
 	private double sumScores = 0;
 
-	private final Random random = new Random();
+	private static final Random random = new Random();
 
 	Node(Node<Move, GS> parent, GS gameState, Move move) {
 		this.parent = parent;
@@ -64,15 +64,23 @@ class Node<Move, GS extends GameState<Move, GS>> {
 		return children != null && children.isEmpty();
 	}
 
-	int visitCount() {
+	public int visitCount() {
 		return visitCount;
 	}
 
-	double sumScores() {
+	public double sumScores() {
 		return sumScores;
 	}
 
-	List<Node<Move, GS>> getChildren() {
+	public Move causationMove() {
+		return causationMove;
+	}
+
+	public GS gameState() {
+		return gameState;
+	}
+
+	public List<Node<Move, GS>> getChildren() {
 		return children;
 	}
 
@@ -101,7 +109,7 @@ class Node<Move, GS extends GameState<Move, GS>> {
 		if (chanceNodeChildren != null) {
 			return chanceNodeChildren.get();
 		} else {
-			return children.isEmpty() ? null : randomElement(children);
+			return randomElement(children);
 		}
 	}
 
@@ -129,11 +137,10 @@ class Node<Move, GS extends GameState<Move, GS>> {
 			if (visitCount == 0) {
 				return randomElement(children);
 			}
-			double maxScore = -1;
+			double maxScore = -Double.MAX_VALUE;
 			Node<Move, GS> selected = null;
 			ArrayList<Node<Move, GS>> unvisitedChildren = new ArrayList<>();
 			for (Node<Move, GS> child : children) {
-				if (child.terminated()) continue;
 				if (child.visitCount() == 0) unvisitedChildren.add(child);
 				if (unvisitedChildren.isEmpty()) {
 					double uctScore = child.sumScores() / child.visitCount() +
@@ -148,10 +155,11 @@ class Node<Move, GS extends GameState<Move, GS>> {
 		}
 	}
 
-	double[] simulate(double utilityGoal) {
-		if (children != null) {
-			throw new IllegalStateException("Not a leaf node.");
+	double[] simulate() {
+		if (children != null && !children.isEmpty()) {
+			throw new IllegalStateException("Not a leaf node: " + gameState + "; child count: " + children.size());
 		}
+
 		GS state = gameState.clone();
 		while (!state.terminated()) {
 			if (state.currentPlayer() == GameState.PLAYER_CHANCE_NODE) {
@@ -160,9 +168,6 @@ class Node<Move, GS extends GameState<Move, GS>> {
 				Move m = state.suggestedMove();
 				assert m != null;
 				state.makeMove(m);
-			}
-			for (int p = 1; p <= state.playerCount(); ++p) {
-				if (state.utility(p) >= utilityGoal) break;
 			}
 		}
 		return state.utilities();

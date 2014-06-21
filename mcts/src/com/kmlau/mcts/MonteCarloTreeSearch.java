@@ -24,25 +24,22 @@
 package com.kmlau.mcts;
 
 public class MonteCarloTreeSearch<Move, GS extends GameState<Move, GS>> {
+	private Node<Move, GS> searchTreeRoot;
 
 	private Node<Move, GS> selectAndExpand(Node<Move, GS> root) {
-		Node<Move, GS> expanded;
 		Node<Move, GS> node = root;
-		do {
-			while (!node.unexpanded()) {
-				Node<Move, GS> newNode = node.selectChild();
-				if (newNode == null) {
-					node.backPropagate(node.gameState.utilities());
-					return null;
-				}
-				node = newNode;
+		while (!node.unexpanded()) {
+			Node<Move, GS> newNode = node.selectChild();
+			if (newNode == null) {
+				return node;
 			}
-			expanded = node.expand();
-		} while (expanded != null && expanded.terminated());
-		return expanded;
+			node = newNode;
+		}
+		Node<Move, GS> expanded = node.expand();
+		return expanded != null ? expanded : node;
 	}
 
-	public Move searchGoodMove(GS gameState, int timeMillisAllowed, double utilityGoal) {
+	public Move searchGoodMove(GS gameState, int timeMillisAllowed) {
 		if (gameState.currentPlayer() == GameState.PLAYER_CHANCE_NODE) {
 			throw new IllegalArgumentException("Game state pertains to a chance node. MCTS cannot compute best move.");
 		}
@@ -51,14 +48,10 @@ public class MonteCarloTreeSearch<Move, GS extends GameState<Move, GS>> {
 
 		while (System.currentTimeMillis() < deadline) {
 			// Select the best unexpanded node and expand it.
-			Node<Move, GS> node = null;
-			for (int attempt = 0; node == null && attempt < 8; ++attempt) {
-				node = selectAndExpand(root);
-			}
-			if (node == null) break;
+			Node<Move, GS> node = selectAndExpand(root);
 
 			// Play it out.
-			double[] utilities = node.simulate(utilityGoal);
+			double[] utilities = node.simulate();
 			node.backPropagate(utilities);
 		}
 		Node<Move, GS> best = null;
@@ -72,6 +65,11 @@ public class MonteCarloTreeSearch<Move, GS extends GameState<Move, GS>> {
 				}
 			}
 		}
-		return best.causationMove;
+		searchTreeRoot = root;
+		return best.causationMove();
+	}
+
+	public Node<Move, GS> getRecentSearchTreeRoot() {
+		return searchTreeRoot;
 	}
 }

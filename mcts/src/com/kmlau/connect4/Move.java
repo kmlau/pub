@@ -7,6 +7,10 @@ public class Move {
 		this.col = col;
 	}
 
+	public String toString() {
+		return "Col " + col;
+	}
+
 	private static final Move[] allMoves;
 	static {
 		allMoves = new Move[7];

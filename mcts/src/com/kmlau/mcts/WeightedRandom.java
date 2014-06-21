@@ -35,7 +35,7 @@ class WeightedRandom<V> {
 
 		// GWT compatible code:
 		//SortedMap<Double, V> x = byCumulativeProb.tailMap(random.nextDouble() - 1e-7);
-		//return x.get(x.firstKey());
+		//return x.entrySet().iterator().next().getValue();
 	}
 
 }

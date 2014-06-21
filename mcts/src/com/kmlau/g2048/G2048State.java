@@ -365,7 +365,7 @@ public class G2048State extends GameStateBase<G2048State.Move, G2048State> {
 		System.out.println(state);
 		MonteCarloTreeSearch<G2048State.Move, G2048State> mcts = new MonteCarloTreeSearch<G2048State.Move, G2048State>();
 		while (true) {
-			G2048State.Move m = mcts.searchGoodMove(state, 800, 2.5);
+			G2048State.Move m = mcts.searchGoodMove(state, 800);
 			state.makeMove(m);
 			state.makeChanceMove();
 			System.out.println(m);
