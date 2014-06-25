@@ -96,10 +96,4 @@ public interface GameState<Move, GS extends GameState<Move, GS>> {
 	void makeChanceMove() throws IllegalStateException;
 
 	GS clone();
-
-	/**
-	 * @return a possibly better move among all legal moves for the current player, if the
-	 * heuristic is easy to compute. otherwise, returning an arbitrary legal move is fine.
-	 */
-	Move suggestedMove() throws IllegalStateException;
 }

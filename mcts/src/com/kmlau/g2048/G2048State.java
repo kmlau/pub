@@ -155,21 +155,6 @@ public class G2048State extends GameStateBase<G2048State.Move, G2048State> {
 		}
 		return changed ? newBoard : null;
 	}
-	
-
-	@Override
-	public Move suggestedMove() {
-		int maxEmpty = -1;
-		Move move = null;
-		for (Map.Entry<Move, byte[][]> e : nextBoards.get().entrySet()) {
-			int count = countEmpty(e.getValue());
-			if (count > maxEmpty) {
-				maxEmpty = count;
-				move = e.getKey();
-			}
-		}
-		return move;
-	}
 
 	@Override
 	public List<Move> possibleMoves() {
@@ -286,14 +271,6 @@ public class G2048State extends GameStateBase<G2048State.Move, G2048State> {
 		board[p.row][p.col] = r.nextDouble() < 0.9 ? (byte)1 : 2;
 		currentPlayer = 1;
 		++pastMoveCount;
-	}
-
-	private static int countEmpty(byte[][] board) {
-		int count = 0;
-		for (byte[] row : board) for (byte v : row) {
-			if (v == 0) ++count;
-		}
-		return count;
 	}
 
 	private static byte[][] clone(byte[][] board) {

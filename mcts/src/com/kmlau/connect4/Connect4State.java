@@ -26,7 +26,6 @@ package com.kmlau.connect4;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 
 import com.kmlau.mcts.GameStateBase;
 
@@ -38,7 +37,6 @@ import com.kmlau.mcts.GameStateBase;
 public class Connect4State extends GameStateBase<Move, Connect4State> {
 	private int currentPlayer = 1;
 	private int[][] board;
-	private static final Random rand = new Random();
 
 	private final CachedValue<Integer> winner = new CachedValue<Integer>() {
 		@Override
@@ -181,19 +179,6 @@ public class Connect4State extends GameStateBase<Move, Connect4State> {
 		Connect4State s = new Connect4State(clone(board));
 		s.currentPlayer = currentPlayer;
 		return s;
-	}
-
-	@Override
-	public Move suggestedMove() throws IllegalStateException {
-		List<Move> moves = possibleMoves();
-		switch (moves.size()) {
-		case 0:
-			return null;
-		case 1:
-			return moves.get(0);
-		default:
-			return moves.get(rand.nextInt(moves.size()));
-		}
 	}
 
 	public int getCell(int row, int col) {

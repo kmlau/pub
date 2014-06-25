@@ -168,7 +168,7 @@ public class Node<Move, GS extends GameState<Move, GS>> {
 			if (state.currentPlayer() == GameState.PLAYER_CHANCE_NODE) {
 				state.makeChanceMove();
 			} else {
-				Move m = state.suggestedMove();
+				Move m = randomElement(state.possibleMoves());
 				assert m != null;
 				state.makeMove(m);
 			}
