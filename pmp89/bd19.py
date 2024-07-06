@@ -23,9 +23,9 @@ def lunar_diff_57(y: int) -> list[int]:
         l_birth = Converter.Solar2Lunar(Solar.from_date(d))
         l_later = Converter.Solar2Lunar(Solar(d.year + 57, d.month, d.day))
         print(d, "\t\tbirth lunar", f"{l_birth.month}-{l_birth.day}",
-              "\t\tbday57 lunnar",  f"{l_later.month}-{l_later.day}")
-        y = diff(l_birth, l_later)
-        hist[y] += 1
+              "\t\tbday57 lunar",  f"{l_later.month}-{l_later.day}")
+        delta = diff(l_birth, l_later)
+        hist[delta] += 1
     print(", ".join(f"{k}: {v}" for k, v in hist.items()))
 
 
